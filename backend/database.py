@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, Date, ForeignKey
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -22,6 +22,7 @@ class Empleado(Base):
     rfc = Column(String(20), unique=True)
     salario = Column(Float)
     departamento_id = Column(Integer, ForeignKey("departamentos.id"))
+    departamento = relationship("Departamentos")
     activo = Column(Boolean, default=True)
 
 # Crear tablas
