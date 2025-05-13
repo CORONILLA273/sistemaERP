@@ -39,6 +39,8 @@ def obtener_empleados():
 def agregar_empleado(nombre: str, rfc: str, salario: float, depto_id: int):
     session = Session()
     try:
+        if not session.query(Departamentos).get(depto_id):
+            raise  ValueError("Departamento Inexistente")
         empleado = Empleado(
             nombre = nombre,
             rfc = rfc, 
@@ -61,3 +63,11 @@ def agregar_empleado(nombre: str, rfc: str, salario: float, depto_id: int):
 def listar_empleados():
     with Session() as session:
         return session.query(Empleado).all()
+
+def obtener_departamentos():
+    # Obtiene todos los departamentos como lista de (id, nombre)
+    session = Session()
+    try: 
+        return session.query(Departamentos.id, Departamentos.nombre).all()
+    finally:
+        session.close()

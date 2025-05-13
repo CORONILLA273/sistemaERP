@@ -63,7 +63,7 @@ class App(ctk.CTk):
         ).pack(pady=5, padx=10)
 
     def limpiar(self):
-        """Destruye todos los widets dentro del contenedor principal"""
+        """Destruye todos los widgets dentro del contenedor principal"""
         for widget in self.contenedorPrincipal.winfo_children():
             widget.destroy()
 

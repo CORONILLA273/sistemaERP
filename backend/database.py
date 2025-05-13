@@ -32,3 +32,18 @@ def init_db():
 
 if __name__ == "__main__":
     init_db()
+
+    # Insertar departamentos básicos
+    session = Session()
+    try:
+        if not session.query(Departamentos).first():
+            session.add_all([
+                Departamentos(nombre="Dirección"),
+                Departamentos(nombre="Contabilidad"),
+                Departamentos(nombre="Ventas"),
+                Departamentos(nombre="Producción"),
+                Departamentos(nombre="Recursos Humanos"),
+            ])
+            session.commit()
+    finally:
+        session.close()

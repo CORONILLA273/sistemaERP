@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from backend.logic.rh import obtener_empleados, agregar_empleado
+from backend.logic.rh import obtener_empleados, agregar_empleado, obtener_departamentos
 
 class ModuloRH(ctk.CTkFrame):
     def __init__(self, parent):
@@ -22,30 +22,23 @@ class ModuloRH(ctk.CTkFrame):
     def _crear_lista_empleados(self):
         # Scrollable Frame
         self.scroll_frame = ctk.CTkScrollableFrame(self.tab_lista)
-        self.scroll_frame.pack(expand=True, fill="both")
-        
-        # Botón de actualización
-        btn_actualizar = ctk.CTkButton(
-            self.tab_lista,
-            text="🔄 Actualizar",
-            command=self._actualizar_lista,
-            fg_color="#2ecc71"
-        )
-        btn_actualizar.pack(pady=5)
-        
+        self.scroll_frame.pack(expand=True, fill="both") 
+              
         # Lista inicial
         self._actualizar_lista()
 
     def _crear_formulario_registro(self):
         form_frame = ctk.CTkFrame(self.tab_registro)
         form_frame.pack(pady=20, padx=30, fill="x")
+
+        departamentos = obtener_departamentos()
+        depts = { nombre: id for id, nombre in departamentos }
         
         # Campos del formulario
         campos = [
             ("Nombre", "entry_nombre"),
             ("RFC", "entry_rfc"),
             ("Salario", "entry_salario"),
-            ("Departamento ID", "entry_depto")
         ]
         
         for i, (label, attr_name) in enumerate(campos):
@@ -54,6 +47,15 @@ class ModuloRH(ctk.CTkFrame):
             entry.grid(row=i, column=1, padx=5, pady=5, sticky="ew")
             setattr(self, attr_name, entry)
         
+        ctk.CTkLabel(form_frame, text="Departamento").grid(row=len(campos), column=0, padx=0, pady=5, sticky="e")
+        self.combo_dptos = ctk.CTkComboBox(
+            master= form_frame,
+            values= [nombre for _, nombre in departamentos],
+            state = "readonly"
+        )
+        self.combo_dptos.grid(row=len(campos), column=1, padx=5, pady=5, sticky="ew")  
+        self.combo_dptos.set("")     
+       
         # Botón de registro
         btn_registrar = ctk.CTkButton(
             form_frame,
@@ -62,6 +64,7 @@ class ModuloRH(ctk.CTkFrame):
             fg_color="#3498db"
         )
         btn_registrar.grid(row=len(campos), columnspan=2, pady=15)
+        print("Departamentos cargados:", [nombre for _, nombre in departamentos])
 
     def _actualizar_lista(self):
         try:
@@ -109,54 +112,80 @@ class ModuloRH(ctk.CTkFrame):
 
     def _registrar_empleado(self):
         try:
-            # 1. Obtener datos
+            # 1. Validación de campos
+            nombre = self.entry_nombre.get().strip()
+            rfc = self.entry_rfc.get().strip()
+            salario_text = self.entry_salario.get().strip()
+            depto_nombre = self.combo_dptos.get().strip()
+
+            if not all([nombre, rfc, salario_text, depto_nombre]):
+                raise ValueError("Todos los campos son obligatorios")
+
+            # 2. Conversión de salario
+            try:
+                salario = float(salario_text)
+                if salario <= 0:
+                    raise ValueError("El salario debe ser mayor a 0")
+            except ValueError:
+                raise ValueError("El salario debe ser un número válido")
+
+            # 3. Obtener ID del departamento
+            deptos = { nombre: id for id, nombre in obtener_departamentos()}
+            if depto_nombre not in deptos:
+                raise ValueError("Seleccione un departamento válido")
+            
+            depto_id = deptos[depto_nombre]
+
+            # 4. Registrar empleado
             datos = {
-                "nombre": self.entry_nombre.get(),
-                "rfc": self.entry_rfc.get(),
-                "salario": float(self.entry_salario.get()),
-                "depto_id": int(self.entry_depto.get())
+                "nombre": nombre,
+                "rfc": rfc,
+                "salario": salario,
+                "depto_id": depto_id
             }
-            
-            # 2. Validar campos vacíos
-            if not all(datos.values()):
-                print("⚠️ Todos los campos son obligatorios")
-                return
-                
-            # 3. Registrar en backend
-            if agregar_empleado(**datos):
-                self._limpiar_formulario()
-                self.tabs.set("📋 Lista de Empleados")
-                self.after(500, self._actualizar_lista)
-                self.mostrar_notificacion("✅ Empleado registrado con éxito")
-            else:
-                print("Error al Reistrar el Usuairo")
-            
-            
-            # 5. Feedback visual (opcional)
-            
-            
+
+            resultado = agregar_empleado(**datos)
+            if not resultado:
+                raise RuntimeError("No se pudo registrar el empleado")
+
+            # 5. Feedback y limpieza
+            self.mostrar_notificacion("✅ Empleado registrado correctamente")
+            self._limpiar_formulario()
+            self._actualizar_lista()
+            self.tabs.set("📋 Lista de Empleados")
+
+        except ValueError as e:
+            self.mostrar_notificacion(f"❌ Error: {str(e)}", error=True)
         except Exception as e:
-            print(f"❌ Error en datos: {str(e)}")
-            self.mostrar_notificacion(f"Error: {str(e)}", error=True)
+            self.mostrar_notificacion(f"❌ Error inesperado: {str(e)}", error=True)
 
     def mostrar_notificacion(self, mensaje, error=False):
-        """Muestra un mensaje flotante"""
         notif = ctk.CTkToplevel(self)
-        notif.geometry("300x100")
-        notif.title("Notificación")
+        notif.title("Notificación" if not error else "Error")
+        notif.geometry("400x100")
+        notif.resizable(False, False)
         
-        label = ctk.CTkLabel(
-            notif, 
+        # Centrar la notificación
+        x = self.winfo_x() + (self.winfo_width() // 2) - 200
+        y = self.winfo_y() + (self.winfo_height() // 2) - 50
+        notif.geometry(f"+{x}+{y}")
+        
+        ctk.CTkLabel(
+            notif,
             text=mensaje,
-            text_color="#e74c3c" if error else "#27ae60"
-        )
-        label.pack(pady=20)
+            text_color=("#e74c3c" if error else "#27ae60"),
+            font=("Arial", 12)
+        ).pack(pady=10)
         
-        # Cierra automáticamente después de 2 segundos
-        self.after(2000, notif.destroy)
+        ctk.CTkButton(
+            notif,
+            text="Aceptar",
+            command=notif.destroy,
+            width=100
+        ).pack(pady=5)
 
     def _limpiar_formulario(self):
         self.entry_nombre.delete(0, "end")
         self.entry_rfc.delete(0, "end")
         self.entry_salario.delete(0, "end")
-        self.entry_depto.delete(0, "end")
+        self.combo_dptos.set("")
