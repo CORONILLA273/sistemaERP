@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 from modules.rh import ModuloRH
+from modules.ventas import ModuloVentas
 
 class App(ctk.CTk):
     def __init__(self):
@@ -74,7 +75,7 @@ class App(ctk.CTk):
     def mostrarModuloVentas(self):
         self.limpiar()
 
-        ctk.CTkLabel(self.contenedorPrincipal, text="Módulo de Ventas").pack()
+        ModuloVentas(self.contenedorPrincipal).pack(expand=True, fill="both")
 
     def mostrarModuloCompras(self):
         self.limpiar()
