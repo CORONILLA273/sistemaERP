@@ -60,6 +60,38 @@ class DetalleVenta(Base):
     precio_unitario = Column(Float)
     producto = relationship("Producto")
 
+class Proveedor(Base):
+    __tablename__ = 'proveedores'
+    id = Column(Integer, primary_key=True)
+    nombre = Column(String(100), nullable=False)
+    contacto = Column(String(100))
+    telefono = Column(String(20))
+
+class Compra(Base):
+    __tablename__ = 'compras'
+    id = Column(Integer, primary_key=True)
+    fecha = Column(Date, default=datetime.now())
+    proveedor_id = Column(Integer, ForeignKey('proveedores.id'))
+    total = Column(Float)
+    proveedor = relationship("Proveedor")
+
+class DetalleCompra(Base):
+    __tablename__ = 'detalles_compra'
+    id = Column(Integer, primary_key=True)
+    compra_id = Column(Integer, ForeignKey('compras.id'))
+    materia_id = Column(Integer, ForeignKey('materias_primas.id'))
+    cantidad = Column(Integer)
+    precio_unitario = Column(Float)
+    materia = relationship("MateriaPrima")
+
+class MateriaPrima(Base):
+    __tablename__ = 'materias_primas'
+    id = Column(Integer, primary_key=True)
+    nombre = Column(String(100), nullable=False)
+    unidad = Column(String(20))  # Ej: "kg", "pzas", "litros"
+    precio = Column(Float, nullable=False)
+
+
 # Crear tablas
 def init_db():
     Base.metadata.create_all(engine)
@@ -78,6 +110,17 @@ if __name__ == "__main__":
                 Departamentos(nombre="Ventas"),
                 Departamentos(nombre="Producción"),
                 Departamentos(nombre="Recursos Humanos"),
+            ])
+        if not session.query(MateriaPrima).first():
+            session.add_all([
+                MateriaPrima(nombre="Motor eléctrico 1HP", unidad="pieza", precio=1200),
+                MateriaPrima(nombre="Impulsor de acero inoxidable", unidad="pieza", precio=350),
+                MateriaPrima(nombre="Carcasa de aluminio", unidad="pieza", precio=420),
+                MateriaPrima(nombre="Eje de acero templado", unidad="pieza", precio=180),
+                MateriaPrima(nombre="Empaques y sellos", unidad="set", precio=95),
+                MateriaPrima(nombre="Tornillos y sujetadores inox", unidad="kg", precio=60),
+                MateriaPrima(nombre="Rodamientos industriales", unidad="pieza", precio=140),
+                MateriaPrima(nombre="Pintura industrial anticorrosiva", unidad="litro", precio=75),
             ])
             session.commit()
     finally:
