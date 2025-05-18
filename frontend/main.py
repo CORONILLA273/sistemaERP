@@ -6,6 +6,7 @@ from modules.rh import ModuloRH
 from modules.ventas import ModuloVentas
 from modules.inventario import ModuloInventario
 from modules.compras import ModuloCompras
+from modules.contabilidad import ModuloContabilidad
 
 class App(ctk.CTk):
     def __init__(self):
@@ -26,6 +27,8 @@ class App(ctk.CTk):
         self.crearBotonesMenu()
 
         self.mostrarModuloRh()
+        self.protocol("WM_DELETE_WINDOW", self.cerrar_aplicacion)
+
 
     def crearBotonesMenu(self):
         # Confiuración para botones
@@ -65,6 +68,12 @@ class App(ctk.CTk):
 
         ctk.CTkButton(
             **botonConfig,
+            text="Finanzas",
+            command= self.mostrarModuloContabilidad
+        ).pack(pady=5, padx=10)
+
+        ctk.CTkButton(
+            **botonConfig,
             text="Salir",
             command= self.destroy,
             fg_color="#d9534f",
@@ -94,8 +103,22 @@ class App(ctk.CTk):
         self.limpiar()
 
         ModuloInventario(self.contenedorPrincipal).pack(expand=True, fill="both")
+    
+    def mostrarModuloContabilidad(self):
+        self.limpiar()
+
+        ModuloContabilidad(self.contenedorPrincipal).pack(expand=True, fill="both")
+    def cerrar_aplicacion(self):
+        try:
+            import matplotlib.pyplot as plt
+            plt.close("all")  # Cierra cualquier figura activa de matplotlib
+        except:
+            pass
+        self.destroy()
+    
 
 if __name__ == "__main__":
     ctk.set_appearance_mode("dark")
     app = App()
     app.mainloop()
+    
