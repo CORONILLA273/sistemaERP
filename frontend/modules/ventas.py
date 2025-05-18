@@ -90,7 +90,7 @@ class ModuloVentas(ctk.CTkFrame):
 
     def _registrar_venta(self):
         try:
-            cliente_nombre = self.entry_cliente.get()
+            cliente_nombre = self.entry_cliente.get().strip()
             vendedor = self.combo_vendedor.get()
 
             if not cliente_nombre:
@@ -143,7 +143,7 @@ class ModuloVentas(ctk.CTkFrame):
         ctk.CTkButton(notif, text="OK", command=notif.destroy).pack()
 
     def _resetear_formulario(self):
-        self.combo_cliente.set("")
+        self.entry_cliente.delete(0, "end")
         self.combo_vendedor.set("")
         for widget in self.frame_productos.winfo_children():
             widget.destroy()

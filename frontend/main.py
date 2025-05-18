@@ -4,6 +4,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 from modules.rh import ModuloRH
 from modules.ventas import ModuloVentas
+from modules.inventario import ModuloInventario
 
 class App(ctk.CTk):
     def __init__(self):
@@ -57,6 +58,12 @@ class App(ctk.CTk):
 
         ctk.CTkButton(
             **botonConfig,
+            text="Inventario",
+            command= self.mostrarModuloInventario
+        ).pack(pady=5, padx=10)
+
+        ctk.CTkButton(
+            **botonConfig,
             text="Salir",
             command= self.destroy,
             fg_color="#d9534f",
@@ -81,6 +88,11 @@ class App(ctk.CTk):
         self.limpiar()
 
         ctk.CTkLabel(self.contenedorPrincipal, text="Módulo de Compras").pack()
+    
+    def mostrarModuloInventario(self):
+        self.limpiar()
+
+        ModuloInventario(self.contenedorPrincipal).pack(expand=True, fill="both")
 
 if __name__ == "__main__":
     ctk.set_appearance_mode("dark")
