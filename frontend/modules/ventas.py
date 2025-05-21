@@ -32,17 +32,36 @@ class ModuloVentas(ctk.CTkFrame):
         if not ventas:
             ctk.CTkLabel(self.scroll_frame, text="No hay ventas registradas.").pack(pady=20)
             return
-        
-        for venta in ventas:
-            frame = ctk.CTkFrame(self.scroll_frame)
-            frame.pack(padx=10, pady=10, fill="x")
 
-            encabezado = f"Venta #{venta['id']} - {venta['fecha']} - Cliente: {venta['cliente']} - Vendedor: {venta['vendedor']} - Total: ${venta['total']:.2f}"
-            ctk.CTkLabel(frame, text=encabezado, font=("Arial", 12, "bold")).pack(anchor="w")
-            
-            for prod in venta['productos']:
-                detalle = f"- {prod['nombre']} x {prod['cantidad']} @ ${prod['precio_unitario']:.2f}"
-                ctk.CTkLabel(frame, text=detalle, font=("Arial", 11)).pack(anchor="w")
+        encabezados = ["ID", "Fecha", "Cliente", "Vendedor", "Producto", "Cantidad", "Precio", "Subtotal", "Acciones"]
+        for col, texto in enumerate(encabezados):
+            ctk.CTkLabel(self.scroll_frame, text=texto, font=("Arial", 12, "bold")).grid(row=0, column=col, padx=10, pady=5)
+
+        fila = 1
+        for venta in ventas:
+            mostrar_venta = True
+            for producto in venta["productos"]:
+                if mostrar_venta:
+                    ctk.CTkLabel(self.scroll_frame, text=venta["id"]).grid(row=fila, column=0, padx=10)
+                    ctk.CTkLabel(self.scroll_frame, text=venta["fecha"]).grid(row=fila, column=1, padx=10)
+                    ctk.CTkLabel(self.scroll_frame, text=venta["cliente"]).grid(row=fila, column=2, padx=10)
+                    ctk.CTkLabel(self.scroll_frame, text=venta["vendedor"]).grid(row=fila, column=3, padx=10)
+                    boton = ctk.CTkButton(self.scroll_frame, text="📄 Generar", width=90, command=lambda v=venta: self.generar_archivo_venta(v))
+                    boton.grid(row=fila, column=8, padx=5)
+                    mostrar_venta = False
+                else:
+                    for col in range(4):
+                        ctk.CTkLabel(self.scroll_frame, text="").grid(row=fila, column=col, padx=10)
+
+                ctk.CTkLabel(self.scroll_frame, text=producto["nombre"]).grid(row=fila, column=4, padx=10)
+                ctk.CTkLabel(self.scroll_frame, text=producto["cantidad"]).grid(row=fila, column=5, padx=10)
+                ctk.CTkLabel(self.scroll_frame, text=f"${producto['precio_unitario']:.2f}").grid(row=fila, column=6, padx=10)
+                subtotal = producto["precio_unitario"] * producto["cantidad"]
+                ctk.CTkLabel(self.scroll_frame, text=f"${subtotal:.2f}").grid(row=fila, column=7, padx=10)
+                    
+                fila += 1
+
+               
 
     
     def _crear_formulario_registro(self):
@@ -59,9 +78,12 @@ class ModuloVentas(ctk.CTkFrame):
         self.combo_vendedor.pack(pady=5, padx=5, fill="x")
         self.combo_vendedor.set("")
 
+        ctk.CTkLabel(self.form_frame, text="Productos").pack(anchor="w", pady=(10, 0), padx=5)
         self.productos_disponibles = obtener_productos_disponibles()
         self.product_inputs = []
 
+        self.frame_productos = ctk.CTkScrollableFrame(self.form_frame, height=200)
+        self.frame_productos.pack(pady=5, padx=5, fill="x")
         self._agregar_producto_input()  # Inicial
 
         ctk.CTkButton(self.form_frame, text="➕ Agregar Producto", command=self._agregar_producto_input).pack(pady=5)
@@ -70,10 +92,6 @@ class ModuloVentas(ctk.CTkFrame):
     def _agregar_producto_input(self):
         producto_names = [f"{p['nombre']} (${p['precio']:.2f} / Stock: {p['stock']})" for p in self.productos_disponibles]
         producto_ids = {f"{p['nombre']} (${p['precio']:.2f} / Stock: {p['stock']})": p['id'] for p in self.productos_disponibles}
-
-        ctk.CTkLabel(self.form_frame, text="Productos").pack(anchor="w", pady=(10, 0), padx=5)
-        self.frame_productos = ctk.CTkScrollableFrame(self.form_frame, height=200)
-        self.frame_productos.pack(pady=5, padx=5, fill="x")
 
         fila = ctk.CTkFrame(self.frame_productos)
         fila.pack(pady=4, padx=5, fill="x")
@@ -149,5 +167,24 @@ class ModuloVentas(ctk.CTkFrame):
             widget.destroy()
         self.product_inputs.clear()
         self._agregar_producto_input()
+
+    def generar_archivo_venta(self, venta):
+        try:
+            contenido = f"Venta #{venta['id']}\nFecha: {venta['fecha']}\nCliente: {venta['cliente']}\nVendedor: {venta['vendedor']}\n\nProductos:\n"
+            total = 0
+            for prod in venta["productos"]:
+                subtotal = prod["precio_unitario"] * prod["cantidad"]
+                contenido += f"- {prod['nombre']} x {prod['cantidad']} @ ${prod['precio_unitario']:.2f} = ${subtotal:.2f}\n"
+                total += subtotal
+            contenido += f"\nTOTAL: ${total:.2f}"
+
+            ruta = f"venta_{venta['id']}.txt"
+            with open(ruta, "w", encoding="utf-8") as f:
+                f.write(contenido)
+
+            self.mostrar_notificacion(f"✅ Archivo generado: {ruta}")
+        except Exception as e:
+            self.mostrar_notificacion(f"❌ Error al generar archivo: {e}", error=True)
+
 
 

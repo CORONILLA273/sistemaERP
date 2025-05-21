@@ -1,4 +1,7 @@
 from backend.database import Session, Empleado, Departamentos
+import secrets
+import string
+import unidecode
 
 def obtener_empleados():
     session = Session()
@@ -12,6 +15,8 @@ def obtener_empleados():
             Empleado.nombre,
             Empleado.rfc,
             Empleado.salario,
+            Empleado.correo,
+            Empleado.contraseña,
             Departamentos.nombre.label('departamento')
         ).join(Departamentos).all()
         
@@ -41,11 +46,19 @@ def agregar_empleado(nombre: str, rfc: str, salario: float, depto_id: int):
     try:
         if not session.query(Departamentos).get(depto_id):
             raise  ValueError("Departamento Inexistente")
+        nombre_simple = unidecode.unidecode(nombre.lower().replace(" ", "."))
+        correo = f"{nombre_simple}@bnj.com"
+         # Contraseña aleatoria de 8 caracteres
+        alfabeto = string.ascii_letters + string.digits
+        contraseña = ''.join(secrets.choice(alfabeto) for _ in range(8))
+
         empleado = Empleado(
             nombre = nombre,
             rfc = rfc, 
             salario = salario,
-            departamento_id = depto_id
+            departamento_id = depto_id,
+            correo=correo,
+            contraseña=contraseña
         )
         session.add(empleado)
         session.commit()

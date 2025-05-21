@@ -3,6 +3,8 @@ from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, D
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 import sys
 from pathlib import Path
+import unidecode, string, secrets
+
 sys.path.append(str(Path(__file__).parent.parent))
 from config import DATABASE_URL
 
@@ -25,6 +27,8 @@ class Empleado(Base):
     departamento_id = Column(Integer, ForeignKey("departamentos.id"))
     departamento = relationship("Departamentos")
     activo = Column(Boolean, default=True)
+    correo = Column(String(100), unique=True)
+    contraseña = Column(String(100))
 
 class Cliente(Base):
     __tablename__ = 'clientes'
@@ -102,6 +106,22 @@ if __name__ == "__main__":
 
     # Insertar departamentos básicos
     session = Session()
+    try:
+        empleados = session.query(Empleado).all()
+        for emp in empleados:
+            if not emp.correo:
+                nombre_simple = unidecode.unidecode(emp.nombre.lower().replace(" ", "."))
+                emp.correo = f"{nombre_simple}@bnj.com"
+
+            if not emp.contraseña:
+                alfabeto = string.ascii_letters + string.digits
+                emp.contraseña = ''.join(secrets.choice(alfabeto) for _ in range(8))
+
+        session.commit()
+        print("✅ Correos y contraseñas generadas para empleados existentes.")
+    except Exception as e:
+        session.rollback()
+        print(f"❌ Error actualizando empleados: {e}")
     try:
         if not session.query(Departamentos).first():
             session.add_all([

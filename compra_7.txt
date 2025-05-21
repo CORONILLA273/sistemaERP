@@ -1,0 +1,9 @@
+Compra #7
+Fecha: 2025-05-21
+Proveedor: Julian
+
+Insumos:
+- Motor eléctrico 1HP x 1 @ $1200.00 = $1200.00
+- Impulsor de acero inoxidable x 7 @ $350.00 = $2450.00
+
+TOTAL: $3650.00

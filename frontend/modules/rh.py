@@ -85,7 +85,7 @@ class ModuloRH(ctk.CTkFrame):
                 return
             
             # Crear encabezados
-            headers = ["ID", "Nombre", "RFC", "Salario", "Departamento"]
+            headers = ["ID", "Nombre", "RFC", "Salario", "Correo", "Contraseña", "Departamento"]
             for col, header in enumerate(headers):
                 ctk.CTkLabel(
                     self.scroll_frame,
@@ -100,7 +100,38 @@ class ModuloRH(ctk.CTkFrame):
                 ctk.CTkLabel(self.scroll_frame, text=emp["nombre"]).grid(row=row, column=1, padx=10)
                 ctk.CTkLabel(self.scroll_frame, text=emp["rfc"]).grid(row=row, column=2, padx=10)
                 ctk.CTkLabel(self.scroll_frame, text=f"${emp['salario']:,.2f}").grid(row=row, column=3, padx=10)
-                ctk.CTkLabel(self.scroll_frame, text=emp["departamento"]).grid(row=row, column=4, padx=10)
+                ctk.CTkLabel(self.scroll_frame, text=emp["correo"]).grid(row=row, column=4, padx=10)
+                # --- Campo de contraseña con ocultamiento dinámico ---
+                clave_visible = ctk.StringVar(value="******")
+                clave_real = emp["contraseña"]
+
+                # Label que muestra la contraseña (oculta por defecto)
+                label_contra = ctk.CTkLabel(self.scroll_frame, textvariable=clave_visible)
+                label_contra.grid(row=row, column=5, padx=10)
+
+                # Función para alternar visibilidad
+                def toggle_contra(lbl=label_contra, var=clave_visible, real=clave_real):
+                    if var.get() == "******":
+                        var.set(real)
+                    else:
+                        var.set("******")
+
+                # Botón 👁 para mostrar/ocultar
+                btn_toggle = ctk.CTkButton(
+                    self.scroll_frame,
+                    text="👁",
+                    width=25,
+                    height=20,
+                    command=toggle_contra,
+                    fg_color="gray",       # sin fondo
+                    hover_color="gray",    # sin hover
+                    text_color="#3498db",         # color del ícono/texto
+                    border_width=0,
+                    font=("Arial", 14)
+                )
+                btn_toggle.grid(row=row, column=5, padx=(100, 0))  # coloca el botón a la derecha
+
+                ctk.CTkLabel(self.scroll_frame, text=emp["departamento"]).grid(row=row, column=6, padx=10)
                 
         except Exception as e:
             print(f"Error en _actualizar_lista: {e}")

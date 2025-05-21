@@ -1,6 +1,6 @@
 # backend/logic/ventas.py
 
-from backend.database import Session, Venta, DetalleVenta, Producto, Cliente, Empleado
+from backend.database import Session, Venta, DetalleVenta, Producto, Cliente, Empleado, Departamentos
 from datetime import datetime
 
 def registrar_venta(cliente_id: int, vendedor_id: int, productos: list):
@@ -103,7 +103,14 @@ def obtener_clientes():
 def obtener_vendedores():
     session = Session()
     try:
-        return session.query(Empleado.id, Empleado.nombre).all()
+        vendedores = (
+            session.query(Empleado.id, Empleado.nombre)
+            .join(Departamentos)
+            .filter(Departamentos.nombre.in_(["Ventas", "Dirección"]))
+            .filter(Empleado.activo == True)
+            .all()
+        )
+        return vendedores
     finally:
         session.close()
 

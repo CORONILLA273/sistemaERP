@@ -4,7 +4,8 @@ from backend.logic.inventario import agregar_producto, obtener_productos
 class ModuloInventario(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent)
-        self.pack(expand=True, fill="both")
+        self.parent = parent
+        self.pack_propagate(False)
 
         self.tabs = ctk.CTkTabview(self)
         self.tabs.pack(expand=True, fill="both", padx=10, pady=10)
@@ -31,7 +32,7 @@ class ModuloInventario(ctk.CTkFrame):
 
         headers = ["ID", "Nombre", "Precio", "Stock"]
         for i, header in enumerate(headers):
-            ctk.CTkLabel(self.scroll, text=header, font=("Arial", 12, "bold")).grid(row=0, column=i, padx=10, pady=5)
+            ctk.CTkLabel(self.scroll, text=header, font=("Arial", 12, "bold"), text_color="#3498db" ).grid(row=0, column=i, padx=10, pady=5, sticky="ew")
 
         for row, p in enumerate(productos, start=1):
             ctk.CTkLabel(self.scroll, text=str(p["id"])).grid(row=row, column=0, padx=10)

@@ -1,4 +1,3 @@
-# frontend/ModuloCompras.py
 
 import customtkinter as ctk
 from backend.logic.compras import (
@@ -12,7 +11,8 @@ from backend.logic.compras import (
 class ModuloCompras(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent)
-        self.pack(expand=True, fill="both")
+        self.parent = parent
+        self.pack_propagate(False)
 
         self.tabs = ctk.CTkTabview(self)
         self.tabs.pack(expand=True, fill="both", padx=10, pady=10)
@@ -39,16 +39,40 @@ class ModuloCompras(ctk.CTkFrame):
             ctk.CTkLabel(self.scroll, text="No hay compras registradas.").pack(pady=20)
             return
 
+        # Encabezado
+        encabezados = ["ID", "Fecha", "Proveedor", "Materia", "Cantidad", "Precio", "Total", "Acciones"]
+        for col, texto in enumerate(encabezados):
+            ctk.CTkLabel(self.scroll, text=texto, font=("Arial", 12, "bold")).grid(row=0, column=col, padx=10, pady=5)
+
+        fila = 1
         for compra in compras:
-            frame = ctk.CTkFrame(self.scroll)
-            frame.pack(padx=10, pady=10, fill="x")
+            mostrar_datos_compra = True
+            for materia in compra["materias"]:
+                if mostrar_datos_compra:
+                    ctk.CTkLabel(self.scroll, text=compra["id"]).grid(row=fila, column=0, padx=10)
+                    ctk.CTkLabel(self.scroll, text=compra["fecha"]).grid(row=fila, column=1, padx=10)
+                    ctk.CTkLabel(self.scroll, text=compra["proveedor"]).grid(row=fila, column=2, padx=10)
+                    mostrar_datos_compra = False
+                else:
+                    # Dejar celdas vacías para ID, Fecha y Proveedor
+                    ctk.CTkLabel(self.scroll, text="").grid(row=fila, column=0, padx=10)
+                    ctk.CTkLabel(self.scroll, text="").grid(row=fila, column=1, padx=10)
+                    ctk.CTkLabel(self.scroll, text="").grid(row=fila, column=2, padx=10)
 
-            encabezado = f"Compra #{compra['id']} - {compra['fecha']} - Proveedor: {compra['proveedor']} - Total: ${compra['total']:.2f}"
-            ctk.CTkLabel(frame, text=encabezado, font=("Arial", 12, "bold")).pack(anchor="w")
+                # Siempre mostrar los datos de la materia
+                ctk.CTkLabel(self.scroll, text=materia["nombre"]).grid(row=fila, column=3, padx=10)
+                ctk.CTkLabel(self.scroll, text=materia["cantidad"]).grid(row=fila, column=4, padx=10)
+                ctk.CTkLabel(self.scroll, text=f"${materia['precio']:.2f}").grid(row=fila, column=5, padx=10)
+                total_linea = materia["precio"] * materia["cantidad"]
+                ctk.CTkLabel(self.scroll, text=f"${total_linea:.2f}").grid(row=fila, column=6, padx=10)
 
-            for prod in compra['materias']:
-                detalle = f"- {prod['nombre']} x {prod['cantidad']} @ ${prod['precio']:.2f}"
-                ctk.CTkLabel(frame, text=detalle, font=("Arial", 11)).pack(anchor="w")
+                if compra["materias"].index(materia) == 0:
+                    boton = ctk.CTkButton(self.scroll, text="📄 Generar", width=90, command=lambda c=compra: self.generar_archivo_compra(c))
+                    boton.grid(row=fila, column=7, padx=5)
+                else:
+                    ctk.CTkLabel(self.scroll, text="").grid(row=fila, column=7, padx=5)
+
+                fila += 1
 
     def _crear_formulario(self):
         self.form_frame = ctk.CTkFrame(self.tab_registro)
@@ -103,7 +127,6 @@ class ModuloCompras(ctk.CTkFrame):
 
         combo = ctk.CTkComboBox(fila, values=materia_names, width=300, state="readonly")
         combo.pack(side="left", padx=5)
-        combo.set("")
 
         cantidad = ctk.CTkEntry(fila, width=60)
         cantidad.pack(side="left", padx=5)
@@ -112,12 +135,31 @@ class ModuloCompras(ctk.CTkFrame):
         precio_label = ctk.CTkLabel(fila, text="$0.00", width=80)
         precio_label.pack(side="left", padx=5)
 
-        def actualizar_precio(event=None):
-            seleccion = combo.get()
-            if seleccion in materia_prices:
-                precio_label.configure(text=f"${materia_prices[seleccion]:.2f}")
+        subtotal_label = ctk.CTkLabel(fila, text="$0.00", width=80)
+        subtotal_label.pack(side="left", padx=5)
 
-        combo.bind("<<ComboboxSelected>>", actualizar_precio)
+        def actualizar():
+            seleccion = combo.get()
+            try:
+                cant = int(cantidad.get())
+            except ValueError:
+                cant = 0
+
+            if seleccion in materia_prices:
+                precio = materia_prices[seleccion]
+                precio_label.configure(text=f"${precio:.2f}")
+                subtotal_label.configure(text=f"${precio * cant:.2f}")
+            else:
+                precio_label.configure(text="$0.00")
+                subtotal_label.configure(text="$0.00")
+
+        combo.bind("<<ComboboxSelected>>", lambda e: actualizar())
+        cantidad.bind("<KeyRelease>", lambda e: actualizar())
+
+        # Valor inicial si hay materias
+        if materia_names:
+            combo.set(materia_names[0])
+            actualizar()
 
         self.materia_inputs.append((combo, cantidad, precio_label, materia_ids, materia_prices))
 
@@ -196,3 +238,23 @@ class ModuloCompras(ctk.CTkFrame):
         top.title("Error" if error else "Éxito")
         ctk.CTkLabel(top, text=msg, text_color="#e74c3c" if error else "#27ae60").pack(pady=10)
         ctk.CTkButton(top, text="OK", command=top.destroy).pack(pady=5)
+
+    def generar_archivo_compra(self, compra):
+        try:
+            contenido = f"Compra #{compra['id']}\nFecha: {compra['fecha']}\nProveedor: {compra['proveedor']}\n\nInsumos:\n"
+            total = 0
+            for insumo in compra["materias"]:
+                subtotal = insumo["precio"] * insumo["cantidad"]
+                contenido += f"- {insumo['nombre']} x {insumo['cantidad']} @ ${insumo['precio']:.2f} = ${subtotal:.2f}\n"
+                total += subtotal
+            contenido += f"\nTOTAL: ${total:.2f}"
+
+            ruta = f"compra_{compra['id']}.txt"
+            with open(ruta, "w", encoding="utf-8") as f:
+                f.write(contenido)
+
+            self._notificar(f"✅ Archivo generado: {ruta}")
+        except Exception as e:
+            self._notificar(f"❌ Error al generar archivo: {e}", error=True)
+
+    

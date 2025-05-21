@@ -1,0 +1,9 @@
+Venta #1
+Fecha: 2025-05-17
+Cliente: Fernando
+Vendedor: Emmanuel
+
+Productos:
+- bOMBA DE POZO x 2 @ $10000.00 = $20000.00
+
+TOTAL: $20000.00

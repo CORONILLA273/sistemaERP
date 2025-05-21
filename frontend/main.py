@@ -109,6 +109,9 @@ class App(ctk.CTk):
 
         ModuloContabilidad(self.contenedorPrincipal).pack(expand=True, fill="both")
     def cerrar_aplicacion(self):
+        for widget in self.contenedorPrincipal.winfo_children():
+            if hasattr(widget, 'destroy'):
+                widget.destroy()
         try:
             import matplotlib.pyplot as plt
             plt.close("all")  # Cierra cualquier figura activa de matplotlib
@@ -118,7 +121,10 @@ class App(ctk.CTk):
     
 
 if __name__ == "__main__":
-    ctk.set_appearance_mode("dark")
-    app = App()
-    app.mainloop()
+    try:
+        ctk.set_appearance_mode("dark")
+        app = App()
+        app.mainloop()
+    except Exception as e:
+        print(f"Ocurrió un error: {e}")
     
