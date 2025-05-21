@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from backend.logic.rh import obtener_empleados, agregar_empleado, obtener_departamentos
+from backend.logic.rh import obtener_empleados, agregar_empleado, obtener_departamentos, eliminar_empleado, actualizar_empleado
 
 class ModuloRH(ctk.CTkFrame):
     def __init__(self, parent):
@@ -38,7 +38,7 @@ class ModuloRH(ctk.CTkFrame):
         campos = [
             ("Nombre", "entry_nombre"),
             ("RFC", "entry_rfc"),
-            ("Salario", "entry_salario"),
+            ("Salario", "entry_salario")
         ]
         
         for i, (label, attr_name) in enumerate(campos):
@@ -47,24 +47,32 @@ class ModuloRH(ctk.CTkFrame):
             entry.grid(row=i, column=1, padx=5, pady=5, sticky="ew")
             setattr(self, attr_name, entry)
         
-        ctk.CTkLabel(form_frame, text="Departamento").grid(row=len(campos), column=0, padx=0, pady=5, sticky="e")
+        # Agrega justo después del último campo del bucle "campos"
+        
+        ctk.CTkLabel(form_frame, text="Departamento").grid(row=3, column=0, padx=0, pady=5, sticky="e")
         self.combo_dptos = ctk.CTkComboBox(
             master= form_frame,
             values= [nombre for _, nombre in departamentos],
             state = "readonly"
         )
+        
         self.combo_dptos.grid(row=len(campos), column=1, padx=5, pady=5, sticky="ew")  
-        self.combo_dptos.set("")     
+        self.combo_dptos.set("") 
+
+        self.frame_contraseña = ctk.CTkFrame(form_frame)
+        self.frame_contraseña.grid(row=4, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+        self.frame_contraseña.grid_remove()  
        
         # Botón de registro
-        btn_registrar = ctk.CTkButton(
+        self.btn_registrar = ctk.CTkButton(
             form_frame,
             text="Registrar",
             command=self._registrar_empleado,
             fg_color="#3498db"
         )
-        btn_registrar.grid(row=len(campos), columnspan=2, pady=15)
+        self.btn_registrar.grid(row=5, columnspan=2, pady=15)
         print("Departamentos cargados:", [nombre for _, nombre in departamentos])
+        self._restaurar_formulario()
 
     def _actualizar_lista(self):
         try:
@@ -85,7 +93,7 @@ class ModuloRH(ctk.CTkFrame):
                 return
             
             # Crear encabezados
-            headers = ["ID", "Nombre", "RFC", "Salario", "Correo", "Contraseña", "Departamento"]
+            headers = ["ID", "Nombre", "RFC", "Salario", "Correo", "Contraseña", "Departamento", "Acciones"]
             for col, header in enumerate(headers):
                 ctk.CTkLabel(
                     self.scroll_frame,
@@ -123,8 +131,8 @@ class ModuloRH(ctk.CTkFrame):
                     width=25,
                     height=20,
                     command=toggle_contra,
-                    fg_color="gray",       # sin fondo
-                    hover_color="gray",    # sin hover
+                    fg_color="black",       # sin fondo
+                    hover_color="Darkgray",    # sin hover
                     text_color="#3498db",         # color del ícono/texto
                     border_width=0,
                     font=("Arial", 14)
@@ -132,6 +140,17 @@ class ModuloRH(ctk.CTkFrame):
                 btn_toggle.grid(row=row, column=5, padx=(100, 0))  # coloca el botón a la derecha
 
                 ctk.CTkLabel(self.scroll_frame, text=emp["departamento"]).grid(row=row, column=6, padx=10)
+                # --- Botones de acción ---
+                frame_accion = ctk.CTkFrame(self.scroll_frame, fg_color="transparent")
+                frame_accion.grid(row=row, column=7, padx=5, pady=2)
+
+                btn_editar = ctk.CTkButton(frame_accion, text="Actualizar", width=32, height=24, command=lambda e=emp: self._editar_empleado(e))
+                btn_editar.pack(side="left", padx=2)
+
+                btn_borrar = ctk.CTkButton(frame_accion, text="Eliminar", width=32, height=24, fg_color="#e74c3c",
+                                        hover_color="#c0392b", command=lambda e=emp: self._confirmar_eliminar(e["id"]))
+                btn_borrar.pack(side="left", padx=2)
+
                 
         except Exception as e:
             print(f"Error en _actualizar_lista: {e}")
@@ -220,3 +239,81 @@ class ModuloRH(ctk.CTkFrame):
         self.entry_rfc.delete(0, "end")
         self.entry_salario.delete(0, "end")
         self.combo_dptos.set("")
+
+    def _confirmar_eliminar(self, empleado_id):
+        ventana = ctk.CTkToplevel(self)
+        ventana.title("Confirmar eliminación")
+        ventana.geometry("300x120")
+
+        ctk.CTkLabel(ventana, text="¿Deseas eliminar este empleado?", font=("Arial", 12)).pack(pady=10)
+        ctk.CTkButton(ventana, text="Eliminar", fg_color="#e74c3c", command=lambda: self._eliminar(empleado_id, ventana)).pack(pady=5)
+        ctk.CTkButton(ventana, text="Cancelar", command=ventana.destroy).pack()
+
+    def _eliminar(self, empleado_id, ventana):
+        if eliminar_empleado(empleado_id):
+            ventana.destroy()
+            self._actualizar_lista()
+            self.mostrar_notificacion("✅ Empleado eliminado correctamente")
+        else:
+            self.mostrar_notificacion("❌ No se pudo eliminar el empleado", error=True)
+
+    def _editar_empleado(self, emp):
+        self.tabs.set("➕ Registrar Empleado")
+        self.entry_nombre.delete(0, "end")
+        self.entry_nombre.insert(0, emp["nombre"])
+        self.entry_rfc.delete(0, "end")
+        self.entry_rfc.insert(0, emp["rfc"])
+        self.entry_salario.delete(0, "end")
+        self.entry_salario.insert(0, str(emp["salario"]))
+        self.combo_dptos.set(emp["departamento"])
+        for widget in self.frame_contraseña.winfo_children():
+            widget.destroy()
+
+        self.frame_contraseña.grid()
+        ctk.CTkLabel(self.frame_contraseña, text="Contraseña").grid(row=0, column=0, padx=5, pady=5, sticky="e")
+        self.entry_contraseña = ctk.CTkEntry(self.frame_contraseña, show="*")
+        self.entry_contraseña.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.entry_contraseña.insert(0, emp["contraseña"])
+        
+        self._modo_edicion_id = emp["id"]
+
+        # Cambiar texto del botón
+        self.btn_registrar.configure(text="Actualizar", command=self._guardar_edicion)
+
+    def _guardar_edicion(self):
+        try:
+            nombre = self.entry_nombre.get().strip()
+            rfc = self.entry_rfc.get().strip()
+            salario = float(self.entry_salario.get().strip())
+            depto_nombre = self.combo_dptos.get().strip()
+            deptos = {nombre: id for id, nombre in obtener_departamentos()}
+            depto_id = deptos[depto_nombre]
+            contraseña = self.entry_contraseña.get().strip() if hasattr(self, "entry_contraseña") else None
+
+
+            if actualizar_empleado(self._modo_edicion_id, nombre, rfc, salario, depto_id, contraseña):
+                self.mostrar_notificacion("✅ Empleado actualizado")
+                self._restaurar_formulario()
+                self._limpiar_formulario()
+                self._actualizar_lista()
+                self.tabs.set("📋 Lista de Empleados")
+            else:
+                self.mostrar_notificacion("❌ No se pudo actualizar", error=True)
+
+        except Exception as e:
+            self.mostrar_notificacion(f"❌ Error: {e}", error=True) 
+    
+    def _restaurar_formulario(self):
+        if hasattr(self, "_modo_edicion_id"):
+            del self._modo_edicion_id
+        self.btn_registrar.configure(text="Registrar", command=self._registrar_empleado)
+        self._modo_edicion_id = None
+        self.entry_nombre.delete(0, "end")
+        self.entry_rfc.delete(0, "end")
+        self.entry_salario.delete(0, "end")
+        if hasattr(self, "entry_contraseña"):
+            self.entry_contraseña.delete(0, "end")
+        self.combo_dptos.set("")
+        self.frame_contraseña.grid_remove()
+
+

@@ -72,6 +72,44 @@ def agregar_empleado(nombre: str, rfc: str, salario: float, depto_id: int):
         return False
     finally:
         session.close()
+
+def eliminar_empleado(empleado_id: int):
+    session = Session()
+    try:
+        empleado = session.query(Empleado).get(empleado_id)
+        if not empleado:
+            raise ValueError("Empleado no encontrado")
+        session.delete(empleado)
+        session.commit()
+        return True
+    except Exception as e:
+        session.rollback()
+        print(f"ERROR al eliminar empleado: {e}")
+        return False
+    finally:
+        session.close()
+
+def actualizar_empleado(empleado_id: int, nombre: str, rfc: str, salario: float, depto_id: int, contraseña: str):
+    session = Session()
+    try:
+        empleado = session.query(Empleado).get(empleado_id)
+        if not empleado:
+            raise ValueError("Empleado no encontrado")
+
+        empleado.nombre = nombre
+        empleado.rfc = rfc
+        empleado.salario = salario
+        empleado.departamento_id = depto_id
+        empleado.contraseña = contraseña
+        session.commit()
+        return True
+    except Exception as e:
+        session.rollback()
+        print(f"ERROR al actualizar empleado: {e}")
+        return False
+    finally:
+        session.close()
+
     
 def listar_empleados():
     with Session() as session:
