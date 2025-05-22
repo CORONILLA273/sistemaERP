@@ -42,7 +42,7 @@ class ModuloCompras(ctk.CTkFrame):
         # Encabezado
         encabezados = ["ID", "Fecha", "Proveedor", "Materia", "Cantidad", "Precio", "Total", "Acciones"]
         for col, texto in enumerate(encabezados):
-            ctk.CTkLabel(self.scroll, text=texto, font=("Arial", 12, "bold")).grid(row=0, column=col, padx=10, pady=5)
+            ctk.CTkLabel(self.scroll, text=texto, font=("Arial", 12, "bold"), text_color="#3498db").grid(row=0, column=col, padx=10, pady=5)
 
         fila = 1
         for compra in compras:
@@ -223,6 +223,12 @@ class ModuloCompras(ctk.CTkFrame):
         if not nombre:
             self._notificar("❌ El nombre es obligatorio", error=True)
             return
+
+        proveedores_actuales = [n.lower() for _, n in obtener_proveedores()]
+        if nombre.lower() in proveedores_actuales:
+            self._notificar("❌ Ya existe un proveedor con ese nombre", error=True)
+            return
+
 
         if registrar_proveedor(nombre, contacto, telefono):
             self._notificar("✅ Proveedor registrado correctamente")

@@ -7,6 +7,7 @@ from modules.ventas import ModuloVentas
 from modules.inventario import ModuloInventario
 from modules.compras import ModuloCompras
 from modules.contabilidad import ModuloContabilidad
+from PIL import Image
 
 class App(ctk.CTk):
     def __init__(self):
@@ -40,7 +41,10 @@ class App(ctk.CTk):
         }
 
         # Botones
-        ctk.CTkLabel(self.menuLateral, text="Módulos", font=("Arial", 18)).pack(pady=20, padx=10)
+        imagen_path = "frontend/widgets/logo2.png"  # Ajusta la ruta según tu imagen
+        img = ctk.CTkImage(light_image=Image.open(imagen_path), size=(180, 110))  # ajusta tamaño
+
+        ctk.CTkLabel(self.menuLateral, image=img, text="").pack(pady=20)
 
         ctk.CTkButton(
             **botonConfig,

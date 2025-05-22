@@ -35,7 +35,7 @@ class ModuloVentas(ctk.CTkFrame):
 
         encabezados = ["ID", "Fecha", "Cliente", "Vendedor", "Producto", "Cantidad", "Precio", "Subtotal", "Acciones"]
         for col, texto in enumerate(encabezados):
-            ctk.CTkLabel(self.scroll_frame, text=texto, font=("Arial", 12, "bold")).grid(row=0, column=col, padx=10, pady=5)
+            ctk.CTkLabel(self.scroll_frame, text=texto, font=("Arial", 12, "bold"), text_color="#3498db").grid(row=0, column=col, padx=10, pady=5)
 
         fila = 1
         for venta in ventas:

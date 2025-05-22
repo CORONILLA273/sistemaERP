@@ -170,6 +170,11 @@ class ModuloRH(ctk.CTkFrame):
 
             if not all([nombre, rfc, salario_text, depto_nombre]):
                 raise ValueError("Todos los campos son obligatorios")
+            
+            empleados_actuales = [e["nombre"].lower() for e in obtener_empleados()]
+            if nombre.lower() in empleados_actuales:
+                raise ValueError("Ya existe un empleado con ese nombre")
+
 
             # 2. Conversión de salario
             try:

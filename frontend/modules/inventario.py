@@ -72,6 +72,9 @@ class ModuloInventario(ctk.CTkFrame):
             stock = int(stock_text)
             if precio <= 0 or stock < 0:
                 raise ValueError("Valores inválidos")
+            productos_actuales = [p["nombre"].lower() for p in obtener_productos()]
+            if nombre.lower() in productos_actuales:
+                raise ValueError("Ya existe un producto con ese nombre")
 
             if agregar_producto(nombre, precio, stock):
                 self._actualizar_lista()
