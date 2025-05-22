@@ -10,10 +10,11 @@ from modules.contabilidad import ModuloContabilidad
 from PIL import Image
 
 class App(ctk.CTk):
-    def __init__(self):
+    def __init__(self, usuario=None):
         super().__init__()
+        self.usuario = usuario
         self.title("ERP Bombas BNJ")
-        self.geometry("1200x700")
+        self.geometry("1200x600")
         ctk.set_appearance_mode("dark")
 
         # Creación de sidebar
@@ -31,6 +32,7 @@ class App(ctk.CTk):
         self.protocol("WM_DELETE_WINDOW", self.cerrar_aplicacion)
 
 
+
     def crearBotonesMenu(self):
         # Confiuración para botones
         botonConfig = {
@@ -43,38 +45,34 @@ class App(ctk.CTk):
         # Botones
         imagen_path = "frontend/widgets/logo2.png"  # Ajusta la ruta según tu imagen
         img = ctk.CTkImage(light_image=Image.open(imagen_path), size=(180, 110))  # ajusta tamaño
-
         ctk.CTkLabel(self.menuLateral, image=img, text="").pack(pady=20)
+        
+        nombre_usuario = f"👤 {self.usuario.nombre}\n📁 {self.usuario.departamento.nombre}" if self.usuario else "Usuario"
+        ctk.CTkLabel(self.menuLateral, text=nombre_usuario, font=("Arial", 14)).pack(pady=(10, 5))
 
-        ctk.CTkButton(
-            **botonConfig,
-            text="Recusros Humanos",
-            command= self.mostrarModuloRh
-        ).pack(pady=5, padx=10)
+        permisos = {
+            "Recursos Humanos": [self.mostrarModuloRh],
+            "Ventas": [self.mostrarModuloVentas, self.mostrarModuloInventario],
+            "Compras": [self.mostrarModuloCompras],
+            "Producción": [self.mostrarModuloInventario],
+            "Contabilidad": [self.mostrarModuloContabilidad, self.mostrarModuloCompras, self.mostrarModuloVentas],
+            "Dirección": [self.mostrarModuloRh, self.mostrarModuloVentas, self.mostrarModuloCompras,
+                        self.mostrarModuloInventario, self.mostrarModuloContabilidad],
+        }
 
-        ctk.CTkButton(
-            **botonConfig,
-            text="Ventas",
-            command= self.mostrarModuloVentas
-        ).pack(pady=5, padx=10)
+        # Obtener nombre del departamento del usuario
+        depto = self.usuario.departamento.nombre if self.usuario and self.usuario.departamento else ""
+        # Mapear texto a función y nombre para el botón
+        opciones = {
+            self.mostrarModuloRh: "Recursos Humanos",
+            self.mostrarModuloVentas: "Ventas",
+            self.mostrarModuloCompras: "Compras",
+            self.mostrarModuloInventario: "Inventario",
+            self.mostrarModuloContabilidad: "Finanzas"
+        }
 
-        ctk.CTkButton(
-            **botonConfig,
-            text="Compras",
-            command= self.mostrarModuloCompras
-        ).pack(pady=5, padx=10)
-
-        ctk.CTkButton(
-            **botonConfig,
-            text="Inventario",
-            command= self.mostrarModuloInventario
-        ).pack(pady=5, padx=10)
-
-        ctk.CTkButton(
-            **botonConfig,
-            text="Finanzas",
-            command= self.mostrarModuloContabilidad
-        ).pack(pady=5, padx=10)
+        for funcion in permisos.get(depto, []):
+            ctk.CTkButton(**botonConfig, text=opciones[funcion], command=funcion).pack(pady=5, padx=10)
 
         ctk.CTkButton(
             **botonConfig,
