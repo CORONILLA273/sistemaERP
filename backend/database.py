@@ -142,6 +142,17 @@ if __name__ == "__main__":
                 MateriaPrima(nombre="Rodamientos industriales", unidad="pieza", precio=140),
                 MateriaPrima(nombre="Pintura industrial anticorrosiva", unidad="litro", precio=75),
             ])
+        if not session.query(Producto).first():
+            session.add_all([
+                Producto(nombre="Sistema de bombeo residencial 1HP", precio=4500, stock=10),
+                Producto(nombre="Sistema de bombeo solar", precio=9800, stock=5),
+                Producto(nombre="Bomba centrífuga 3HP", precio=7200, stock=8),
+                Producto(nombre="Bomba sumergible 2HP", precio=6400, stock=6),
+                Producto(nombre="Controlador de presión automático", precio=1200, stock=15),
+                Producto(nombre="Tablero de control trifásico", precio=3500, stock=4),
+                Producto(nombre="Tanque hidroneumático 24L", precio=1800, stock=7),
+                Producto(nombre="Kit de instalación hidráulica", precio=950, stock=20),
+            ]) 
             session.commit()
     finally:
         session.close()
