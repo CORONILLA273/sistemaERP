@@ -51,7 +51,16 @@ class ModuloCompras(ctk.CTkFrame):
                 if mostrar_datos_compra:
                     ctk.CTkLabel(self.scroll, text=compra["id"]).grid(row=fila, column=0, padx=10)
                     ctk.CTkLabel(self.scroll, text=compra["fecha"]).grid(row=fila, column=1, padx=10)
-                    ctk.CTkLabel(self.scroll, text=compra["proveedor"]).grid(row=fila, column=2, padx=10)
+                    label_proveedor = ctk.CTkLabel(
+                        self.scroll,
+                        text=compra["proveedor"],
+                        cursor="hand2"
+                    )
+                    label_proveedor.grid(row=fila, column=2, padx=10)
+
+                    label_proveedor.bind("<Button-1>", lambda e, nombre=compra["proveedor"]: self._mostrar_info_proveedor(nombre))
+                    label_proveedor.bind("<Enter>", lambda e: label_proveedor.configure(text_color="#3498db"))
+                    label_proveedor.bind("<Leave>", lambda e: label_proveedor.configure(text_color="white"))
                     mostrar_datos_compra = False
                 else:
                     # Dejar celdas vacías para ID, Fecha y Proveedor
@@ -256,5 +265,34 @@ class ModuloCompras(ctk.CTkFrame):
             self._notificar(f"✅ Archivo generado: {ruta}")
         except Exception as e:
             self._notificar(f"❌ Error al generar archivo: {e}", error=True)
+
+    def _mostrar_info_proveedor(self, nombre_proveedor):
+    # Buscar datos del proveedor
+        proveedores = obtener_proveedores()
+        info = next(((id, n) for id, n in proveedores if n == nombre_proveedor), None)
+
+        if not info:
+            self._notificar("❌ Proveedor no encontrado", error=True)
+            return
+
+        # Aquí puedes personalizar si quieres buscar más datos (como teléfono, contacto)
+        from backend.logic.compras import Session, Proveedor
+        session = Session()
+        try:
+            proveedor = session.query(Proveedor).filter_by(nombre=nombre_proveedor).first()
+            if proveedor:
+                detalles = f"📦 Nombre: {proveedor.nombre}\n📞 Contacto: {proveedor.contacto or 'N/A'}\n📱 Teléfono: {proveedor.telefono or 'N/A'}"
+            else:
+                detalles = "Proveedor no encontrado."
+        finally:
+            session.close()
+
+        # Mostrar info
+        ventana = ctk.CTkToplevel(self)
+        ventana.title("Información del Proveedor")
+        ventana.geometry("300x150")
+        ctk.CTkLabel(ventana, text=detalles, justify="left").pack(padx=15, pady=15)
+        ctk.CTkButton(ventana, text="Cerrar", command=ventana.destroy).pack(pady=5)
+
 
     
