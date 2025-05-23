@@ -6,9 +6,10 @@ from backend.logic.ventas import (
 )
 
 class ModuloVentas(ctk.CTkFrame):
-    def __init__(self, parent):
+    def __init__(self, parent, usuario):
         super().__init__(parent)
         self.pack(expand=True, fill="both")
+        self.usuario = usuario
         
         self.tabs = ctk.CTkTabview(self)
         self.tabs.pack(expand=True, fill="both", padx=10, pady=10)
@@ -72,11 +73,20 @@ class ModuloVentas(ctk.CTkFrame):
         self.entry_cliente = ctk.CTkEntry(self.form_frame, placeholder_text="Ej. Juan Pérez")
         self.entry_cliente.pack(pady=5, padx=5, fill="x")
 
-        self.vendedores = {nombre: id for id, nombre in obtener_vendedores()}    
-        ctk.CTkLabel(self.form_frame, text="Vendedor (Empleado del área de Ventas)").pack(anchor="w", pady=(10, 0), padx=5)
-        self.combo_vendedor = ctk.CTkComboBox(self.form_frame, values=list(self.vendedores.keys()), state="readonly")
-        self.combo_vendedor.pack(pady=5, padx=5, fill="x")
-        self.combo_vendedor.set("")
+        ctk.CTkLabel(self.form_frame, text="Vendedor").pack(anchor="w", pady=(10, 0), padx=5)
+
+        if self.usuario.departamento.nombre == "Ventas":
+            self.combo_vendedor = ctk.CTkEntry(self.form_frame)
+            self.combo_vendedor.pack(pady=5, padx=5, fill="x")
+            self.combo_vendedor.insert(0, self.usuario.nombre)
+            self.combo_vendedor.configure(state="disabled")
+            self.vendedor_id_fijo = self.usuario.id  # guardar el ID real
+        else:
+            self.vendedores = {nombre: id for id, nombre in obtener_vendedores()}
+            self.combo_vendedor = ctk.CTkComboBox(self.form_frame, values=list(self.vendedores.keys()), state="readonly")
+            self.combo_vendedor.pack(pady=5, padx=5, fill="x")
+            self.combo_vendedor.set("")
+
 
         ctk.CTkLabel(self.form_frame, text="Productos").pack(anchor="w", pady=(10, 0), padx=5)
         self.productos_disponibles = obtener_productos_disponibles()
@@ -109,18 +119,20 @@ class ModuloVentas(ctk.CTkFrame):
     def _registrar_venta(self):
         try:
             cliente_nombre = self.entry_cliente.get().strip()
-            vendedor = self.combo_vendedor.get()
-
             if not cliente_nombre:
-                raise ValueError("Debe Ingresar el nombre del cliente")
+                raise ValueError("Debe ingresar el nombre del cliente")
 
             cliente_id = obtener_o_crear_cliente_por_nombre(cliente_nombre)
             if not cliente_id:
                 raise RuntimeError("No se pudo registrar o encontrar el cliente")
-            if not cliente_nombre or not vendedor:
-                raise ValueError("Selecciona cliente y vendedor")
-
-            vendedor_id = self.vendedores[vendedor]
+            
+            if self.usuario.departamento.nombre != "Ventas":
+                vendedor = self.combo_vendedor.get()
+                if not vendedor:
+                    raise ValueError("Seleccione un vendedor")
+                vendedor_id = self.vendedores[vendedor]
+            else:
+                vendedor_id = self.vendedor_id_fijo
 
             productos = []
             for combo, entry, ids in self.product_inputs:
@@ -162,7 +174,15 @@ class ModuloVentas(ctk.CTkFrame):
 
     def _resetear_formulario(self):
         self.entry_cliente.delete(0, "end")
-        self.combo_vendedor.set("")
+
+        if isinstance(self.combo_vendedor, ctk.CTkComboBox):
+            self.combo_vendedor.set("")
+        elif isinstance(self.combo_vendedor, ctk.CTkEntry):
+            self.combo_vendedor.configure(state="normal")
+            self.combo_vendedor.delete(0, "end")
+            self.combo_vendedor.insert(0, self.usuario.nombre)
+            self.combo_vendedor.configure(state="disabled")
+
         for widget in self.frame_productos.winfo_children():
             widget.destroy()
         self.product_inputs.clear()

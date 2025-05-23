@@ -5,6 +5,8 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.ticker import FuncFormatter
 import matplotlib.dates as mdates
 from datetime import datetime
+import mplcursors
+
 
 
 class ModuloContabilidad(ctk.CTkFrame):
@@ -46,7 +48,7 @@ class ModuloContabilidad(ctk.CTkFrame):
         ax.plot(fechas, ingresos, marker='o', markersize=8, linewidth=3, label="Ingresos", color=colores["ingresos"], alpha=0.9, markeredgecolor='white', markeredgewidth=1.5 )
         ax.plot(fechas, egresos, marker='s', linewidth=2, label="Egresos", color=colores["egresos"], alpha=0.9, markeredgecolor='white', markeredgewidth=1.5)
         ax.plot(fechas, utilidad, marker='^', markersize=8, linewidth=3, label="Utilidad Neta", color=colores["utilidad"], alpha=0.9, markeredgecolor='white', markeredgewidth=1.5)
-
+        mplcursors.cursor(ax.lines, hover=True)
         def formato_moneda (x, pos):
             return f"{x:,.0f}"
         
@@ -59,7 +61,6 @@ class ModuloContabilidad(ctk.CTkFrame):
         ax.legend()
         ax.xaxis.set_major_locator(mdates.DayLocator(interval=1))
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%d %b %Y"))
-        
 
         canvas = FigureCanvasTkAgg(self.fig, master=self)
         canvas.draw()

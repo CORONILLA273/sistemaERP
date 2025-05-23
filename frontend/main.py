@@ -7,6 +7,7 @@ from modules.ventas import ModuloVentas
 from modules.inventario import ModuloInventario
 from modules.compras import ModuloCompras
 from modules.contabilidad import ModuloContabilidad
+from modules.perfil import ModuloPerfil
 from PIL import Image
 
 class App(ctk.CTk):
@@ -74,6 +75,9 @@ class App(ctk.CTk):
         for funcion in permisos.get(depto, []):
             ctk.CTkButton(**botonConfig, text=opciones[funcion], command=funcion).pack(pady=5, padx=10)
 
+        if depto not in ["Recursos Humanos", "Dirección"]:
+            ctk.CTkButton(**botonConfig, text="Mi Perfil", command=self.mostrarModuloPerfil).pack(pady=5, padx=10)
+
         ctk.CTkButton(
             **botonConfig,
             text="Salir",
@@ -94,7 +98,7 @@ class App(ctk.CTk):
     def mostrarModuloVentas(self):
         self.limpiar()
 
-        ModuloVentas(self.contenedorPrincipal).pack(expand=True, fill="both")
+        ModuloVentas(self.contenedorPrincipal, self.usuario).pack(expand=True, fill="both")
 
     def mostrarModuloCompras(self):
         self.limpiar()
@@ -120,6 +124,11 @@ class App(ctk.CTk):
         except:
             pass
         self.destroy()
+    
+    def mostrarModuloPerfil(self):
+        self.limpiar()
+        ModuloPerfil(self.contenedorPrincipal, self.usuario).pack(expand=True, fill="both")
+
     
 
 if __name__ == "__main__":
