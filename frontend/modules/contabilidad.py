@@ -26,8 +26,10 @@ class ModuloContabilidad(ctk.CTkFrame):
         ingresos = obtener_ingresos()
         egresos = obtener_egresos()
 
-        fechas = sorted(set([i["fecha"] for i in ingresos] + [e["fecha"] for e in egresos]))
-        fechas = [datetime.strptime(f, "%Y-%m-%d") for f in fechas]
+        fechas_crudas = sorted(set([i["fecha"] for i in ingresos] + [e["fecha"] for e in egresos]))
+        fechas_crudas = [datetime.strptime(f, "%Y-%m-%d") for f in fechas_crudas]
+        fechas = fechas_crudas[-5:]  # Solo los últimos 5 días con datos
+
 
         datos_ingresos = {datetime.strptime(i["fecha"], "%Y-%m-%d"): i["total"] for i in ingresos}
         datos_egresos = {datetime.strptime(e["fecha"], "%Y-%m-%d"): e["total"] for e in egresos}
